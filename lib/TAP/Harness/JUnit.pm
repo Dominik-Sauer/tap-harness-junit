@@ -127,6 +127,8 @@ sub new {
 	@TAP::Harness::JUnit::Parser::ISA = ($self->parser_class);
 	$self->parser_class ('TAP::Harness::JUnit::Parser');
 
+	$self->callback( after_runtests => sub { $self->_after_runtests(@_) } );
+
 	return $self;
 }
 
@@ -313,10 +315,8 @@ sub parsetest {
 	push @{$self->{__xml}->{testsuite}}, $xml;
 }
 
-sub runtests {
-	my ($self, @files) = @_;
-
-	my $aggregator = $self->SUPER::runtests(@files);
+sub _after_runtests {
+	my ($self, $aggregator) = @_;
 
 	foreach my $test (keys %{$aggregator->{parser_for}}) {
 		$self->parsetest ($test => $aggregator->{parser_for}->{$test});
@@ -338,8 +338,6 @@ sub runtests {
 
 	# If we caused the dumps to be preserved, clean them
 	File::Path::rmtree($self->{__rawtapdir}) if $self->{__cleantap};
-
-	return $aggregator;
 }
 
 # Because not all utf8 characters are allowed in xml, only these
